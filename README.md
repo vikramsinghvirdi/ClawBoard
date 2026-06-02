@@ -12,10 +12,9 @@ If your OpenClaw agents can work in parallel, your bottleneck becomes planning a
 
 ![ClawBoard board](docs/assets/clawboard-board.png)
 
-- [Watch the demo video](docs/assets/clawboard-demo.mp4)
-- [View first-run setup](docs/assets/clawboard-setup.png)
-- [View agents and channels](docs/assets/clawboard-agents-channels.png)
-- [View mobile board](docs/assets/clawboard-mobile.png)
+![ClawBoard first-run setup](docs/assets/clawboard-setup.png)
+
+![ClawBoard agents and channels](docs/assets/clawboard-agents-channels.png)
 
 ## ✨ Features
 
