@@ -37,6 +37,23 @@ chmod +x start.sh
 
 The board will open at `http://127.0.0.1:52837`
 
+## 🎬 Demo Mode
+
+For screenshots, walkthroughs, or a first look without touching your real OpenClaw workspace, run ClawBoard against the bundled sample data:
+
+```bash
+PORT=52942 \
+OPENCLAW_CONFIG="$PWD/demo/openclaw.json" \
+KANBAN_PATH="$PWD/demo/KANBAN.md" \
+MEMORY_DIR="$PWD/demo/memory" \
+BOARD_CHANNEL_ID=100000000000000199 \
+node server.js
+```
+
+Then open `http://127.0.0.1:52942`.
+
+The demo config uses placeholder Discord channel IDs and no real bot token, so it is safe for public screenshots and video.
+
 ## 📋 Prerequisites
 
 - **Node.js** (v18+)

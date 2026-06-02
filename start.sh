@@ -11,7 +11,7 @@ PORT="${PORT:-52837}"
 # Check if already running
 if [ -f "$PID_FILE" ]; then
   OLD_PID=$(cat "$PID_FILE")
-  if kill -0 "$OLD_PID" 2>/dev/null; then
+  if [[ "$OLD_PID" =~ ^[0-9]+$ ]] && [ "$OLD_PID" -gt 1 ] && kill -0 "$OLD_PID" 2>/dev/null; then
     echo "🌌 ClawBoard is already running (PID: $OLD_PID)"
     echo "   http://127.0.0.1:$PORT"
     echo ""
@@ -33,11 +33,12 @@ echo $! > "$PID_FILE"
 
 sleep 1
 
-if kill -0 $(cat "$PID_FILE") 2>/dev/null; then
+NEW_PID=$(cat "$PID_FILE")
+if [[ "$NEW_PID" =~ ^[0-9]+$ ]] && [ "$NEW_PID" -gt 1 ] && kill -0 "$NEW_PID" 2>/dev/null; then
   echo "  ✅ ClawBoard running at http://127.0.0.1:$PORT"
   echo "  📋 Syncing with ~/.openclaw/workspace/KANBAN.md"
   echo "  📝 Log: $LOG_FILE"
-  echo "  🛑 Stop: kill $(cat $PID_FILE)"
+  echo "  🛑 Stop: kill $NEW_PID"
   echo ""
 
   # Try to open in browser

@@ -1,0 +1,86 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openai/gpt-5.5"
+      },
+      "models": {
+        "openai/gpt-5.5": {},
+        "openai/gpt-5.4-mini": {},
+        "codex/gpt-5.4-mini": {},
+        "ollama/qwen3.5:4b": {}
+      }
+    },
+    "list": [
+      {
+        "id": "planner",
+        "name": "Planning Agent",
+        "workspace": "/demo/workspaces/planner",
+        "model": {
+          "primary": "openai/gpt-5.5",
+          "fallbacks": ["openai/gpt-5.4-mini"]
+        }
+      },
+      {
+        "id": "builder",
+        "name": "Builder Agent",
+        "workspace": "/demo/workspaces/builder",
+        "model": {
+          "primary": "openai/gpt-5.4-mini",
+          "fallbacks": ["codex/gpt-5.4-mini"]
+        }
+      },
+      {
+        "id": "reviewer",
+        "name": "Review Agent",
+        "workspace": "/demo/workspaces/reviewer",
+        "model": {
+          "primary": "codex/gpt-5.4-mini",
+          "fallbacks": ["ollama/qwen3.5:4b"]
+        }
+      }
+    ]
+  },
+  "channels": {
+    "discord": {
+      "token": "",
+      "guilds": {
+        "100000000000000001": {
+          "name": "OpenClaw Demo"
+        }
+      }
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "planner",
+      "match": {
+        "channel": "discord",
+        "guildId": "100000000000000001",
+        "peer": {
+          "id": "100000000000000101"
+        }
+      }
+    },
+    {
+      "agentId": "builder",
+      "match": {
+        "channel": "discord",
+        "guildId": "100000000000000001",
+        "peer": {
+          "id": "100000000000000102"
+        }
+      }
+    },
+    {
+      "agentId": "reviewer",
+      "match": {
+        "channel": "discord",
+        "guildId": "100000000000000001",
+        "peer": {
+          "id": "100000000000000103"
+        }
+      }
+    }
+  ]
+}
