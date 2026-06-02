@@ -30,8 +30,8 @@
           <span class="status-dot"></span>
           <span class="status-label">Synced with KANBAN.md</span>
         </div>
-        <button id="theme-toggle-btn" class="btn" aria-label="Toggle Theme" style="padding: 6px; display: flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary);">
-          <svg id="theme-icon-dark" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <button id="theme-toggle-btn" class="btn icon-btn" aria-label="Toggle Theme">
+          <svg id="theme-icon-dark" class="theme-icon-hidden" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           <svg id="theme-icon-light" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
         </button>
         <button id="add-task-btn" class="btn btn-primary">
@@ -47,12 +47,12 @@
     </div>
 
     <!-- ═══ Filter Bar & Tabs ═══ -->
-    <div class="filter-bar animate-fade-in" style="justify-content: space-between;">
-      <div class="tab-group" id="main-tabs" style="display: flex; gap: var(--space-sm);">
+    <div class="filter-bar animate-fade-in">
+      <div class="tab-group" id="main-tabs">
         <button class="tab-btn active" data-target="workspace-layout">Kanban Board</button>
         <button class="tab-btn" data-target="workspace-logs-layout">Workspace Logs</button>
       </div>
-      <div class="filter-group" style="display: flex; gap: var(--space-sm);">
+      <div class="filter-group">
         <select id="filter-agent">
           <option value="">🤖 All Agents</option>
           <!-- Populated dynamically -->
@@ -139,9 +139,9 @@
           </section>
           <!-- Board Activity Feed -->
           <section class="sidebar-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: var(--space-sm); border-bottom: 1px solid var(--border-subtle);">
-              <h3 style="padding-bottom: 0; border-bottom: none; margin: 0;">⚡ Board Activity</h3>
-              <button id="expand-activity-btn" class="btn-icon" aria-label="Expand Activity" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;padding:4px;border-radius:var(--radius-sm);display:flex;">
+            <div class="sidebar-section-header">
+              <h3>⚡ Board Activity</h3>
+              <button id="expand-activity-btn" class="icon-only-btn" aria-label="Expand Activity">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
               </button>
             </div>
@@ -156,11 +156,11 @@
     <!-- ═══ Workspace Logs Workspace ═══ -->
     <div class="workspace-logs-layout hide-layout" id="workspace-logs-layout">
       <section class="full-page-section">
-        <div class="activity-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: var(--space-md); margin-bottom: var(--space-md);">
-          <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin:0;">📝 Workspace Logs</h3>
+        <div class="activity-header workspace-activity-header">
+          <h3>📝 Workspace Logs</h3>
           <span class="activity-date-badge" id="activity-date">Loading...</span>
         </div>
-        <div class="activity-log-container hide-scrollbar" id="file-activity-log" style="font-size: 0.95rem; line-height: 1.6;">
+        <div class="activity-log-container workspace-file-log hide-scrollbar" id="file-activity-log">
           <p class="activity-placeholder">Loading...</p>
         </div>
       </section>
@@ -213,7 +213,7 @@
         </div>
 
         <div class="modal-actions">
-          <button type="button" id="delete-task-btn" class="btn btn-danger" style="display:none">Delete</button>
+          <button type="button" id="delete-task-btn" class="btn btn-danger hidden">Delete</button>
           <div class="action-right">
             <button type="button" id="cancel-task-btn" class="btn btn-secondary">Cancel</button>
             <button type="submit" class="btn btn-primary">Save Task</button>
@@ -282,9 +282,15 @@
         <section class="onboarding-panel onboarding-wide">
           <h4>Board channel config</h4>
           <p class="onboarding-copy">Optional: set one Discord channel for board-wide status updates. Agent replies still go to each assigned agent channel.</p>
-          <pre class="setup-snippet"><code>{
-  "boardChannelId": "YOUR_DISCORD_CHANNEL_ID"
-}</code></pre>
+          <div class="board-channel-form">
+            <label for="board-channel-id">Discord channel ID</label>
+            <div class="board-channel-row">
+              <input id="board-channel-id" type="text" inputmode="numeric" autocomplete="off" placeholder="123456789012345678">
+              <button type="button" id="save-board-channel-btn" class="btn btn-primary">Save</button>
+              <button type="button" id="clear-board-channel-btn" class="btn btn-secondary">Clear</button>
+            </div>
+            <p id="board-channel-help" class="onboarding-copy"></p>
+          </div>
         </section>
       </div>
 

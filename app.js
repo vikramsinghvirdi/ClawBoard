@@ -49,6 +49,10 @@ const reviewTaskInfo = document.getElementById('review-task-info');
 const closeOnboardingBtn = document.getElementById('close-onboarding-btn');
 const dismissOnboardingBtn = document.getElementById('dismiss-onboarding-btn');
 const refreshSetupBtn = document.getElementById('refresh-setup-btn');
+const boardChannelInput = document.getElementById('board-channel-id');
+const saveBoardChannelBtn = document.getElementById('save-board-channel-btn');
+const clearBoardChannelBtn = document.getElementById('clear-board-channel-btn');
+const boardChannelHelp = document.getElementById('board-channel-help');
 
 let reviewingTask = null;
 let reviewingCol = null;
@@ -202,6 +206,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   refreshSetupBtn.addEventListener('click', async () => {
     await fetchSetup({ allowAutoOpen: false });
     showToast('Setup status refreshed', 'info');
+  });
+  saveBoardChannelBtn?.addEventListener('click', () => saveBoardChannelSetting(boardChannelInput.value));
+  clearBoardChannelBtn?.addEventListener('click', () => {
+    boardChannelInput.value = '';
+    saveBoardChannelSetting('');
   });
   closeDialogOnBackdropClick(onboardingDialog);
 
@@ -361,11 +370,49 @@ function renderOnboarding() {
       <dd>${escapeHtml(value || 'Not configured')}</dd>
     </div>
   `).join('');
+
+  renderBoardChannelSetting();
 }
 
 function openOnboarding() {
   renderOnboarding();
   onboardingDialog.showModal();
+}
+
+function renderBoardChannelSetting() {
+  if (!boardChannelInput || !boardChannelHelp || !setupStatus) return;
+
+  boardChannelInput.value = setupStatus.savedBoardChannelId || setupStatus.boardChannelId || '';
+  const activeChannel = setupStatus.boardChannelId || 'Not configured';
+  const envNote = setupStatus.envBoardChannelIdConfigured
+    ? ' BOARD_CHANNEL_ID is set for this server; saved changes apply now, but the env value wins after restart.'
+    : '';
+  boardChannelHelp.textContent = `Active board channel: ${activeChannel}.${envNote}`;
+}
+
+async function saveBoardChannelSetting(boardChannelId) {
+  const normalized = String(boardChannelId || '').trim();
+  if (saveBoardChannelBtn) saveBoardChannelBtn.disabled = true;
+  if (clearBoardChannelBtn) clearBoardChannelBtn.disabled = true;
+
+  try {
+    const res = await fetch('/api/settings/board-channel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ boardChannelId: normalized })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save board channel');
+
+    await fetchSetup({ allowAutoOpen: false });
+    showToast(data.boardChannelId ? 'Board channel saved' : 'Board channel cleared', 'success');
+  } catch (err) {
+    console.error('Failed to save board channel:', err);
+    showToast(err.message || 'Failed to save board channel', 'error');
+  } finally {
+    if (saveBoardChannelBtn) saveBoardChannelBtn.disabled = false;
+    if (clearBoardChannelBtn) clearBoardChannelBtn.disabled = false;
+  }
 }
 
 // ─── Fetch OpenClaw Agents ───────────────────────────────────────────
@@ -567,7 +614,7 @@ async function fetchActivity() {
       if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
         let content = trimmed.substring(1).trim();
         content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        content = content.replace(/`(.*?)`/g, '<code style="background:hsla(225,20%,5%,0.6);padding:1px 4px;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;">$1</code>');
+        content = content.replace(/`(.*?)`/g, '<code>$1</code>');
         items.push(`<div class="activity-item">${content}</div>`);
       }
     }

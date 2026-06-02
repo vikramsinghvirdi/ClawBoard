@@ -10,12 +10,13 @@ const DEFAULT_CLAWBOARD_CONFIG = path.join(HOME_DIR, '.openclaw', 'clawboard.jso
 const LOCAL_CLAWBOARD_CONFIG = path.join(__dirname, '.clawboard.json');
 const CLAWBOARD_CONFIG = process.env.CLAWBOARD_CONFIG
   || (fs.existsSync(LOCAL_CLAWBOARD_CONFIG) ? LOCAL_CLAWBOARD_CONFIG : DEFAULT_CLAWBOARD_CONFIG);
-const clawboardConfig = readJsonFile(CLAWBOARD_CONFIG) || {};
+let clawboardConfig = readJsonFile(CLAWBOARD_CONFIG) || {};
 const PORT = Number(process.env.PORT || 52837);
 const OPENCLAW_CONFIG = process.env.OPENCLAW_CONFIG || clawboardConfig.openclawConfig || path.join(HOME_DIR, '.openclaw', 'openclaw.json');
 const KANBAN_PATH = process.env.KANBAN_PATH || clawboardConfig.kanbanPath || path.join(HOME_DIR, '.openclaw', 'workspace', 'KANBAN.md');
 const MEMORY_DIR = process.env.MEMORY_DIR || clawboardConfig.memoryDir || path.join(path.dirname(KANBAN_PATH), 'memory');
-const BOARD_CHANNEL_ID = process.env.BOARD_CHANNEL_ID || clawboardConfig.boardChannelId || clawboardConfig.discord?.boardChannelId || '';
+const ENV_BOARD_CHANNEL_ID = process.env.BOARD_CHANNEL_ID || '';
+let runtimeBoardChannelId = ENV_BOARD_CHANNEL_ID || clawboardConfig.boardChannelId || clawboardConfig.discord?.boardChannelId || '';
 
 function readJsonFile(filePath) {
   try {
@@ -29,7 +30,36 @@ function readJsonFile(filePath) {
 }
 
 function writeJsonFile(filePath, data) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n', 'utf8');
+}
+
+function normalizeBoardChannelId(channelId) {
+  return String(channelId || '').trim().replace(/^#/, '');
+}
+
+function setBoardChannelId(channelId) {
+  const normalized = normalizeBoardChannelId(channelId);
+  if (normalized && !/^\d{10,25}$/.test(normalized)) {
+    throw new Error('Board channel ID must be numeric Discord channel ID');
+  }
+
+  clawboardConfig = readJsonFile(CLAWBOARD_CONFIG) || {};
+  if (normalized) {
+    clawboardConfig.boardChannelId = normalized;
+  } else {
+    delete clawboardConfig.boardChannelId;
+    if (clawboardConfig.discord) {
+      delete clawboardConfig.discord.boardChannelId;
+      if (Object.keys(clawboardConfig.discord).length === 0) {
+        delete clawboardConfig.discord;
+      }
+    }
+  }
+  writeJsonFile(CLAWBOARD_CONFIG, clawboardConfig);
+  runtimeBoardChannelId = normalized;
+
+  return normalized;
 }
 
 function defaultKanbanMarkdown() {
@@ -267,7 +297,7 @@ function normalizeChannelId(channel) {
 function resolveBoardChannelId(task = null, explicitChannelId = '') {
   const requested = normalizeChannelId(explicitChannelId);
   if (requested) return requested;
-  if (BOARD_CHANNEL_ID) return BOARD_CHANNEL_ID;
+  if (runtimeBoardChannelId) return runtimeBoardChannelId;
   return normalizeChannelId(task?.channel);
 }
 
@@ -275,6 +305,7 @@ function getSetupStatus() {
   const config = loadOpenClawConfig();
   const agents = config?.agents?.list || [];
   const bindings = getDiscordChannelBindings();
+  const savedBoardChannelId = clawboardConfig.boardChannelId || clawboardConfig.discord?.boardChannelId || '';
   return {
     clawboardConfigPath: CLAWBOARD_CONFIG,
     openclawConfigPath: OPENCLAW_CONFIG,
@@ -285,8 +316,10 @@ function getSetupStatus() {
     agentsCount: agents.length,
     bindingsCount: bindings.length,
     discordTokenConfigured: Boolean(config?.channels?.discord?.token),
-    boardChannelConfigured: Boolean(BOARD_CHANNEL_ID),
-    boardChannelId: BOARD_CHANNEL_ID,
+    boardChannelConfigured: Boolean(runtimeBoardChannelId),
+    boardChannelId: runtimeBoardChannelId,
+    savedBoardChannelId,
+    envBoardChannelIdConfigured: Boolean(ENV_BOARD_CHANNEL_ID),
     availableModels: getAvailableModels(config)
   };
 }
@@ -707,6 +740,26 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(setup));
   }
+  // ── API: Save Board Channel Setting ──
+  else if (pathname === '/api/settings/board-channel' && method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const { boardChannelId = '' } = JSON.parse(body || '{}');
+        const normalized = setBoardChannelId(boardChannelId);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          boardChannelId: normalized,
+          envBoardChannelIdConfigured: Boolean(ENV_BOARD_CHANNEL_ID)
+        }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+  }
   // ── API: Get Tasks ──
   else if (pathname === '/api/tasks' && method === 'GET') {
     ensureKanbanFile();
@@ -1024,8 +1077,9 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`\n  🌌 ClawBoard running at http://127.0.0.1:${PORT}\n`);
   console.log(`  📋 KANBAN: ${KANBAN_PATH}`);
   console.log(`  ⚙️  Config: ${OPENCLAW_CONFIG}\n`);
-  if (BOARD_CHANNEL_ID) {
-    console.log(`  📣 Board status channel: ${BOARD_CHANNEL_ID}\n`);
+  if (runtimeBoardChannelId) {
+    const source = ENV_BOARD_CHANNEL_ID ? 'env' : 'config';
+    console.log(`  📣 Board status channel: ${runtimeBoardChannelId} (${source})\n`);
   } else {
     console.log('  📣 Board status channel: not configured; task channels are used as fallback.\n');
   }

@@ -150,6 +150,7 @@ ClawBoard is intentionally small: it is not a full issue tracker, and it does no
 | `/api/notify` | POST | Send Discord notification |
 | `/api/activity` | GET | Get recent workspace activity |
 | `/api/setup` | GET | Get onboarding/configuration status |
+| `/api/settings/board-channel` | POST | Save or clear the board-wide Discord status channel |
 | `/api/task-status` | POST | Move one task by id |
 | `/api/task-details` | POST | Update one task description |
 
