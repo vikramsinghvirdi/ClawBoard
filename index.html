@@ -54,11 +54,14 @@
       </div>
       <div class="filter-group">
         <button id="open-agent-directory-btn" class="btn btn-secondary" type="button">Agents & Channels</button>
-        <select id="filter-agent">
-          <option value="">🤖 All Agents</option>
-          <!-- Populated dynamically -->
-        </select>
-        <button id="clear-filters-btn" class="btn btn-secondary">Clear</button>
+        <div class="agent-filter" id="agent-filter">
+          <button id="agent-filter-toggle" class="agent-filter-toggle" type="button" aria-expanded="false" aria-controls="agent-filter-menu">
+            <span id="agent-filter-label">🤖 All Agents</span>
+            <span class="agent-filter-caret">⌄</span>
+          </button>
+          <div id="agent-filter-menu" class="agent-filter-menu" hidden></div>
+        </div>
+        <button id="clear-filters-btn" class="btn btn-secondary" type="button">Clear</button>
       </div>
     </div>
 

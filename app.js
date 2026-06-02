@@ -59,10 +59,16 @@ const closeAgentDirectoryBtn = document.getElementById('close-agent-directory-bt
 const agentDirectoryList = document.getElementById('agent-directory-list');
 const agentDirectorySource = document.getElementById('agent-directory-source');
 const setupSourceNote = document.getElementById('setup-source-note');
+const agentFilter = document.getElementById('agent-filter');
+const agentFilterToggle = document.getElementById('agent-filter-toggle');
+const agentFilterLabel = document.getElementById('agent-filter-label');
+const agentFilterMenu = document.getElementById('agent-filter-menu');
+const clearFiltersBtn = document.getElementById('clear-filters-btn');
 
 let reviewingTask = null;
 let reviewingCol = null;
 let onboardingDismissed = false;
+let selectedAgentFilters = new Set();
 
 function closeDialogOnBackdropClick(dialogEl) {
   if (!dialogEl) return;
@@ -81,6 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (stored) localActivityLog = JSON.parse(stored);
   } catch (e) { /* ignore */ }
   onboardingDismissed = localStorage.getItem('clawboard-onboarding-dismissed') === 'true';
+  loadStoredAgentFilters();
 
   // Load OpenClaw data first, then tasks
   await fetchSetup();
@@ -129,10 +136,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Filters
-  document.getElementById('filter-agent').addEventListener('change', renderBoard);
-  document.getElementById('clear-filters-btn').addEventListener('click', () => {
-    document.getElementById('filter-agent').value = '';
+  agentFilterToggle.addEventListener('click', () => {
+    const isOpen = agentFilterToggle.getAttribute('aria-expanded') === 'true';
+    setAgentFilterMenuOpen(!isOpen);
+  });
+  clearFiltersBtn.addEventListener('click', () => {
+    selectedAgentFilters.clear();
+    persistAgentFilters();
+    syncAgentFilterControls();
     renderBoard();
+  });
+  document.addEventListener('click', (event) => {
+    if (!agentFilter.contains(event.target)) setAgentFilterMenuOpen(false);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') setAgentFilterMenuOpen(false);
   });
 
   // Setup drag-and-drop on all columns
@@ -390,6 +408,108 @@ function openOnboarding() {
   onboardingDialog.showModal();
 }
 
+function loadStoredAgentFilters() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('clawboard-agent-filters') || '[]');
+    if (Array.isArray(stored)) selectedAgentFilters = new Set(stored.map(String));
+  } catch (err) {
+    selectedAgentFilters = new Set();
+  }
+}
+
+function persistAgentFilters() {
+  localStorage.setItem('clawboard-agent-filters', JSON.stringify([...selectedAgentFilters]));
+}
+
+function setAgentFilterMenuOpen(isOpen) {
+  if (!agentFilterToggle || !agentFilterMenu) return;
+  agentFilterToggle.setAttribute('aria-expanded', String(isOpen));
+  agentFilterMenu.hidden = !isOpen;
+}
+
+function agentMatchesTask(task, agentId) {
+  if (!task.assigned) return false;
+  if (task.assigned === agentId) return true;
+  const agent = openclawAgents.find(item => item.id === agentId);
+  return Boolean(agent && task.assigned === agent.name);
+}
+
+function taskMatchesSelectedAgents(task) {
+  if (selectedAgentFilters.size === 0) return true;
+  return [...selectedAgentFilters].some(agentId => agentMatchesTask(task, agentId));
+}
+
+function updateAgentFilterLabel() {
+  if (!agentFilterLabel || !clearFiltersBtn) return;
+
+  const selected = [...selectedAgentFilters]
+    .map(agentId => openclawAgents.find(agent => agent.id === agentId)?.name || agentId)
+    .filter(Boolean);
+
+  if (selected.length === 0) {
+    agentFilterLabel.textContent = '🤖 All Agents';
+  } else if (selected.length === 1) {
+    agentFilterLabel.textContent = selected[0];
+  } else {
+    agentFilterLabel.textContent = `${selected.length} agents selected`;
+  }
+
+  clearFiltersBtn.disabled = selected.length === 0;
+}
+
+function syncAgentFilterControls() {
+  if (!agentFilterMenu) return;
+  agentFilterMenu.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.checked = selectedAgentFilters.has(input.value);
+  });
+  updateAgentFilterLabel();
+}
+
+function renderAgentFilterOptions() {
+  if (!agentFilterMenu) return;
+
+  const validAgentIds = new Set(openclawAgents.map(agent => agent.id));
+  selectedAgentFilters = new Set([...selectedAgentFilters].filter(agentId => validAgentIds.has(agentId)));
+
+  agentFilterMenu.innerHTML = '';
+
+  if (openclawAgents.length === 0) {
+    agentFilterMenu.innerHTML = '<p class="agent-filter-empty">No OpenClaw agents found.</p>';
+    updateAgentFilterLabel();
+    return;
+  }
+
+  openclawAgents.forEach(agent => {
+    const row = document.createElement('label');
+    row.className = 'agent-filter-option';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = agent.id;
+    checkbox.checked = selectedAgentFilters.has(agent.id);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) selectedAgentFilters.add(agent.id);
+      else selectedAgentFilters.delete(agent.id);
+      persistAgentFilters();
+      syncAgentFilterControls();
+      renderBoard();
+    });
+
+    const name = document.createElement('span');
+    name.textContent = agent.name;
+
+    const meta = document.createElement('span');
+    meta.className = 'agent-filter-meta';
+    meta.textContent = agent.id;
+
+    row.append(checkbox, name, meta);
+    agentFilterMenu.appendChild(row);
+  });
+
+  persistAgentFilters();
+  updateAgentFilterLabel();
+}
+
 function isDemoConfigPath(configPath = '') {
   return /\/demo\/openclaw\.json$|clawboard-(demo|check|media)-openclaw\.json$/.test(String(configPath));
 }
@@ -454,15 +574,13 @@ async function fetchAgents() {
     openclawAgents = await res.json();
 
     const agentSelect = inputAssigned;
-    const filterAgent = document.getElementById('filter-agent');
     agentSelect.innerHTML = '<option value="">Unassigned</option>';
-    filterAgent.innerHTML = '<option value="">🤖 All Agents</option>';
 
     openclawAgents.forEach(agent => {
       agentSelect.appendChild(new Option(agent.name, agent.id));
-      filterAgent.appendChild(new Option(agent.name, agent.id));
     });
 
+    renderAgentFilterOptions();
     renderAgentSidebar();
     renderAgentDirectory();
   } catch (err) {
@@ -738,12 +856,10 @@ async function notifyDiscord(task, fromCol, toCol) {
 
 // ─── Render Board ────────────────────────────────────────────────────
 function renderBoard() {
-  const filterAgent = document.getElementById('filter-agent').value;
-
   COLUMNS.forEach(colName => {
     let list = [...(tasksData[colName] || [])];
 
-    if (filterAgent) list = list.filter(t => t.assigned === filterAgent);
+    list = list.filter(taskMatchesSelectedAgents);
 
     const countId = `count-${colName.replace(/\s+/g, '-')}`;
     const countEl = document.getElementById(countId);
