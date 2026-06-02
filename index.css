@@ -1286,6 +1286,12 @@ dialog#onboarding-dialog {
   max-height: min(88vh, 820px);
 }
 
+dialog#agent-directory-dialog {
+  max-width: min(920px, 94vw);
+  width: min(920px, 94vw);
+  max-height: min(88vh, 780px);
+}
+
 dialog#task-dialog[open] {
   display: flex;
 }
@@ -1295,6 +1301,10 @@ dialog#review-dialog[open] {
 }
 
 dialog#onboarding-dialog[open] {
+  display: flex;
+}
+
+dialog#agent-directory-dialog[open] {
   display: flex;
 }
 
@@ -1374,6 +1384,14 @@ dialog#onboarding-dialog .modal-content {
   overflow: auto;
 }
 
+dialog#agent-directory-dialog .modal-content {
+  width: 100%;
+  max-height: min(88vh, 780px);
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -1386,6 +1404,12 @@ dialog#onboarding-dialog .modal-content {
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.modal-subtitle {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
 }
 
 .close-btn {
@@ -1428,6 +1452,127 @@ dialog#onboarding-dialog .modal-content {
 
 .onboarding-wide {
   grid-column: 1 / -1;
+}
+
+.agent-directory-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+  gap: var(--space-md);
+}
+
+.agent-directory-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.agent-directory-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.85fr) minmax(0, 1.15fr);
+  gap: var(--space-md);
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+}
+
+.agent-directory-row.missing-binding {
+  border-color: hsla(38, 95%, 55%, 0.24);
+  background: hsla(38, 95%, 55%, 0.06);
+}
+
+.agent-directory-main,
+.agent-directory-meta {
+  min-width: 0;
+}
+
+.agent-directory-main strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-directory-main span {
+  display: block;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-directory-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.agent-directory-meta code,
+.agent-model-pill,
+.channel-pill,
+.missing-channel {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-directory-meta code {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 3px 6px;
+}
+
+.agent-model-pill,
+.channel-pill,
+.missing-channel {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 7px;
+}
+
+.agent-model-pill {
+  color: var(--text-secondary);
+  background: var(--bg-input);
+}
+
+.channel-pill {
+  color: var(--col-review);
+  background: hsla(195, 90%, 50%, 0.1);
+}
+
+.missing-channel {
+  color: var(--color-warning);
+  background: hsla(38, 95%, 55%, 0.1);
+}
+
+.setup-steps {
+  margin: var(--space-md) 0 0 18px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.setup-steps.compact {
+  margin-top: var(--space-sm);
+  font-size: 0.73rem;
+}
+
+.setup-steps li + li {
+  margin-top: 5px;
 }
 
 .onboarding-checklist {
@@ -1772,9 +1917,19 @@ dialog#onboarding-dialog .modal-content {
 
   .task-form-layout,
   .review-form-layout,
-  .onboarding-layout {
+  .onboarding-layout,
+  .agent-directory-layout {
     grid-template-columns: 1fr;
     gap: var(--space-md);
+  }
+
+  .agent-directory-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .agent-directory-meta {
+    justify-content: flex-start;
   }
 
   .onboarding-wide {
@@ -2044,6 +2199,10 @@ dialog#onboarding-dialog .modal-content {
     flex: 1;
     min-width: 0;
   }
+
+  #open-agent-directory-btn {
+    flex: 0 0 auto;
+  }
 }
 
 @media (max-width: 600px) {
@@ -2086,6 +2245,17 @@ dialog#onboarding-dialog .modal-content {
 
   .board-channel-row {
     grid-template-columns: 1fr;
+  }
+
+  .filter-group {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    width: 100%;
+  }
+
+  #open-agent-directory-btn {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   .modal-actions,

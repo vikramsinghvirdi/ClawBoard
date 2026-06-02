@@ -53,6 +53,7 @@
         <button class="tab-btn" data-target="workspace-logs-layout">Workspace Logs</button>
       </div>
       <div class="filter-group">
+        <button id="open-agent-directory-btn" class="btn btn-secondary" type="button">Agents & Channels</button>
         <select id="filter-agent">
           <option value="">🤖 All Agents</option>
           <!-- Populated dynamically -->
@@ -258,6 +259,36 @@
     </div>
   </dialog>
 
+  <!-- ═══ Agent Directory Modal ═══ -->
+  <dialog class="task-dialog" id="agent-directory-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h3>Agents & Channels</h3>
+          <p class="modal-subtitle">See which OpenClaw agent is connected to each Discord channel.</p>
+        </div>
+        <button class="close-btn" id="close-agent-directory-btn" type="button">&times;</button>
+      </div>
+      <div class="agent-directory-layout">
+        <section class="onboarding-panel">
+          <h4>Agent channel bindings</h4>
+          <div id="agent-directory-list" class="agent-directory-list">
+            <div class="activity-placeholder">Loading agents...</div>
+          </div>
+        </section>
+        <section class="onboarding-panel">
+          <h4>How to find a Discord channel ID</h4>
+          <ol class="setup-steps">
+            <li>Open Discord settings and enable Developer Mode under Advanced.</li>
+            <li>Right-click the channel your agent should use.</li>
+            <li>Choose Copy Channel ID and paste it into ClawBoard setup.</li>
+          </ol>
+          <p class="onboarding-copy">Use one channel per agent for replies. The board status channel is optional and can be a shared channel such as project-updates.</p>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
   <!-- ═══ First-run Setup Dialog ═══ -->
   <dialog class="task-dialog" id="onboarding-dialog">
     <div class="modal-content">
@@ -280,7 +311,7 @@
         </section>
 
         <section class="onboarding-panel onboarding-wide">
-          <h4>Board channel config</h4>
+          <h4>Board status channel</h4>
           <p class="onboarding-copy">Optional: set one Discord channel for board-wide status updates. Agent replies still go to each assigned agent channel.</p>
           <div class="board-channel-form">
             <label for="board-channel-id">Discord channel ID</label>
@@ -290,6 +321,11 @@
               <button type="button" id="clear-board-channel-btn" class="btn btn-secondary">Clear</button>
             </div>
             <p id="board-channel-help" class="onboarding-copy"></p>
+            <ol class="setup-steps compact">
+              <li>Enable Developer Mode in Discord settings under Advanced.</li>
+              <li>Right-click the Discord channel and choose Copy Channel ID.</li>
+              <li>Paste the numeric ID here. The leading # is optional.</li>
+            </ol>
           </div>
         </section>
       </div>

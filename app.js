@@ -53,6 +53,10 @@ const boardChannelInput = document.getElementById('board-channel-id');
 const saveBoardChannelBtn = document.getElementById('save-board-channel-btn');
 const clearBoardChannelBtn = document.getElementById('clear-board-channel-btn');
 const boardChannelHelp = document.getElementById('board-channel-help');
+const openAgentDirectoryBtn = document.getElementById('open-agent-directory-btn');
+const agentDirectoryDialog = document.getElementById('agent-directory-dialog');
+const closeAgentDirectoryBtn = document.getElementById('close-agent-directory-btn');
+const agentDirectoryList = document.getElementById('agent-directory-list');
 
 let reviewingTask = null;
 let reviewingCol = null;
@@ -195,6 +199,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     activityModal.close();
   });
   closeDialogOnBackdropClick(activityModal);
+
+  openAgentDirectoryBtn?.addEventListener('click', () => openAgentDirectory());
+  closeAgentDirectoryBtn?.addEventListener('click', () => agentDirectoryDialog.close());
+  closeDialogOnBackdropClick(agentDirectoryDialog);
 
   // Onboarding dialog
   closeOnboardingBtn.addEventListener('click', () => onboardingDialog.close());
@@ -433,6 +441,7 @@ async function fetchAgents() {
     });
 
     renderAgentSidebar();
+    renderAgentDirectory();
   } catch (err) {
     console.error('Failed to fetch agents:', err);
   }
@@ -488,9 +497,56 @@ async function fetchChannels() {
       channelNameMap[binding.channelId] = friendly;
       channelNameMap[`#${binding.channelId}`] = friendly;
     });
+    renderAgentDirectory();
   } catch (err) {
     console.error('Failed to fetch channels:', err);
   }
+}
+
+function getAgentDirectoryRows() {
+  return openclawAgents.map(agent => {
+    const binding = openclawChannels.find(b => b.agentId === agent.id);
+    let totalCount = 0;
+    COLUMNS.forEach(col => {
+      totalCount += (tasksData[col] || []).filter(t => t.assigned === agent.id || t.assigned === agent.name).length;
+    });
+
+    return {
+      agent,
+      binding,
+      totalCount,
+      channelLabel: binding ? `#${binding.agentId}` : 'Not bound',
+      channelId: binding?.channelId || ''
+    };
+  });
+}
+
+function renderAgentDirectory() {
+  if (!agentDirectoryList) return;
+
+  if (openclawAgents.length === 0) {
+    agentDirectoryList.innerHTML = '<div class="activity-placeholder">No OpenClaw agents found yet.</div>';
+    return;
+  }
+
+  agentDirectoryList.innerHTML = getAgentDirectoryRows().map(({ agent, binding, totalCount, channelLabel, channelId }) => `
+    <div class="agent-directory-row ${binding ? '' : 'missing-binding'}">
+      <div class="agent-directory-main">
+        <strong>${escapeHtml(agent.name)}</strong>
+        <span>${escapeHtml(agent.id)} · ${totalCount} task${totalCount !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="agent-directory-meta">
+        <span class="agent-model-pill">${escapeHtml(agent.model || 'No model')}</span>
+        <span class="channel-pill">${escapeHtml(channelLabel)}</span>
+        ${channelId ? `<code>${escapeHtml(channelId)}</code>` : '<span class="missing-channel">No Discord channel binding</span>'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function openAgentDirectory() {
+  renderAgentDirectory();
+  agentDirectoryDialog.showModal();
 }
 
 // ─── Render Agent Sidebar ────────────────────────────────────────────
@@ -582,6 +638,7 @@ async function fetchTasks() {
 
     renderBoard();
     renderAgentSidebar();
+    renderAgentDirectory();
     renderLocalActivity();
   } catch (err) {
     console.error('Error fetching tasks:', err);
