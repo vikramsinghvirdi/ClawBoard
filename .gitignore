@@ -1,0 +1,28 @@
+# ClawBoard temp files
+.clawboard.pid
+clawboard.log
+clawboard-launch.log
+launch-clawboard.sh
+node_modules/
+
+# Local/private workflow scripts
+scripts/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
