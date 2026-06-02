@@ -217,7 +217,26 @@ body {
 .logo-area {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.logo-icon {
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 1.55rem;
+  height: 42px;
+  justify-content: center;
+  line-height: 1;
+  width: 42px;
+}
+
+.logo-text {
+  min-width: 0;
 }
 
 .task-id-badge {
@@ -257,6 +276,7 @@ body {
   color: var(--text-secondary);
   font-weight: 500;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .header-actions {
@@ -531,7 +551,7 @@ body {
 }
 
 .workspace-layout.sidebar-collapsed {
-  gap: 0;
+  gap: var(--space-sm);
 }
 
 /* ─── Board Container — 5 Columns ──────────────────────────────────── */
@@ -906,7 +926,7 @@ body {
 }
 
 .sidebar-wrapper.collapsed {
-  width: 0;
+  width: 32px;
 }
 
 .sidebar-container {
@@ -926,6 +946,10 @@ body {
   opacity: 0;
   pointer-events: none;
   overflow: hidden;
+}
+
+.sidebar-wrapper.collapsed .toggle-sidebar-btn {
+  left: 2px;
 }
 
 .toggle-sidebar-btn {
@@ -1412,6 +1436,15 @@ dialog#agent-directory-dialog .modal-content {
   font-size: 0.78rem;
 }
 
+.modal-source,
+.setup-source-note {
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+}
+
 .close-btn {
   background: none;
   border: none;
@@ -1579,6 +1612,7 @@ dialog#agent-directory-dialog .modal-content {
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  margin-top: var(--space-md);
 }
 
 .setup-check {

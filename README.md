@@ -8,6 +8,15 @@ If your OpenClaw agents can work in parallel, your bottleneck becomes planning a
 
 **Keywords:** OpenClaw Kanban, AI agent task board, Discord agent workflow, self-hosted project board, agent review queue.
 
+## Demo
+
+![ClawBoard board](docs/assets/clawboard-board.png)
+
+- [Watch the demo video](docs/assets/clawboard-demo.mp4)
+- [View first-run setup](docs/assets/clawboard-setup.png)
+- [View agents and channels](docs/assets/clawboard-agents-channels.png)
+- [View mobile board](docs/assets/clawboard-mobile.png)
+
 ## ✨ Features
 
 - **5 Swim Lanes**: Backlog → To Do → In Progress → In Review → Done
@@ -21,7 +30,7 @@ If your OpenClaw agents can work in parallel, your bottleneck becomes planning a
 - **Validation**: Can't move to "To Do" without assigning an agent and channel
 - **Activity Log**: Shows recent workspace activity from OpenClaw memory
 - **First-run Setup**: Guided setup checklist for config, agents, Discord bindings, and board status channel
-- **Premium Dark UI**: Glassmorphism, ambient glows, micro-animations
+- **Responsive Dark Dashboard**: Dense board layout, clean controls, and horizontal lanes for small screens
 
 ## 🚀 Quick Start
 

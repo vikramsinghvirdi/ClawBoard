@@ -57,6 +57,8 @@ const openAgentDirectoryBtn = document.getElementById('open-agent-directory-btn'
 const agentDirectoryDialog = document.getElementById('agent-directory-dialog');
 const closeAgentDirectoryBtn = document.getElementById('close-agent-directory-btn');
 const agentDirectoryList = document.getElementById('agent-directory-list');
+const agentDirectorySource = document.getElementById('agent-directory-source');
+const setupSourceNote = document.getElementById('setup-source-note');
 
 let reviewingTask = null;
 let reviewingCol = null;
@@ -326,6 +328,7 @@ function renderOnboarding() {
   const checklist = document.getElementById('onboarding-checklist');
   const paths = document.getElementById('setup-paths');
   if (!checklist || !paths) return;
+  renderConfigSourceNotes();
 
   const checks = [
     {
@@ -385,6 +388,26 @@ function renderOnboarding() {
 function openOnboarding() {
   renderOnboarding();
   onboardingDialog.showModal();
+}
+
+function isDemoConfigPath(configPath = '') {
+  return /\/demo\/openclaw\.json$|clawboard-(demo|check|media)-openclaw\.json$/.test(String(configPath));
+}
+
+function sourceSummary() {
+  if (!setupStatus) return 'Agents load from your active OpenClaw config.';
+  const path = setupStatus.openclawConfigPath || 'OpenClaw config not found';
+  if (isDemoConfigPath(path)) return 'Demo agents are loaded from the bundled sample OpenClaw config';
+  return `Agents are loaded from ${path}`;
+}
+
+function renderConfigSourceNotes() {
+  const summary = sourceSummary();
+  const demoNote = setupStatus && isDemoConfigPath(setupStatus.openclawConfigPath)
+    ? ' This is sample data for screenshots. Run ./start.sh without demo overrides to see your real OpenClaw agents.'
+    : '';
+  if (setupSourceNote) setupSourceNote.textContent = `${summary}.${demoNote}`;
+  if (agentDirectorySource) agentDirectorySource.textContent = `${summary}.${demoNote}`;
 }
 
 function renderBoardChannelSetting() {
@@ -523,6 +546,7 @@ function getAgentDirectoryRows() {
 
 function renderAgentDirectory() {
   if (!agentDirectoryList) return;
+  renderConfigSourceNotes();
 
   if (openclawAgents.length === 0) {
     agentDirectoryList.innerHTML = '<div class="activity-placeholder">No OpenClaw agents found yet.</div>';
