@@ -50,7 +50,7 @@
     <div class="filter-bar animate-fade-in">
       <div class="tab-group" id="main-tabs">
         <button class="tab-btn active" data-target="workspace-layout">Kanban Board</button>
-        <button class="tab-btn" data-target="workspace-logs-layout">Workspace Logs</button>
+        <button class="tab-btn" data-target="workspace-logs-layout">Logs</button>
       </div>
       <div class="filter-group">
         <button id="open-agent-directory-btn" class="btn btn-secondary" type="button">Agents & Channels</button>
@@ -141,31 +141,18 @@
               <div class="activity-placeholder">Loading agents...</div>
             </div>
           </section>
-          <!-- Board Activity Feed -->
-          <section class="sidebar-section">
-            <div class="sidebar-section-header">
-              <h3>⚡ Board Activity</h3>
-              <button id="expand-activity-btn" class="icon-only-btn" aria-label="Expand Activity">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
-              </button>
-            </div>
-            <div class="activity-log-container hide-scrollbar" id="local-activity-log">
-              <div class="activity-placeholder">No board activity yet</div>
-            </div>
-          </section>
         </aside>
       </div>
     </div>
 
-    <!-- ═══ Workspace Logs Workspace ═══ -->
+    <!-- ═══ Logs Workspace ═══ -->
     <div class="workspace-logs-layout hide-layout" id="workspace-logs-layout">
       <section class="full-page-section">
         <div class="activity-header workspace-activity-header">
-          <h3>📝 Workspace Logs</h3>
-          <span class="activity-date-badge" id="activity-date">Loading...</span>
+          <h3>⚡ Board Activity</h3>
         </div>
-        <div class="activity-log-container workspace-file-log hide-scrollbar" id="file-activity-log">
-          <p class="activity-placeholder">Loading...</p>
+        <div class="activity-log-container workspace-board-log hide-scrollbar" id="local-activity-log">
+          <div class="activity-placeholder">No board activity yet</div>
         </div>
       </section>
     </div>
@@ -245,19 +232,6 @@
           <button type="button" id="reject-review-btn" class="btn btn-danger">Reject & Send Back</button>
           <button type="button" id="approve-review-btn" class="btn btn-primary">✅ Approve</button>
         </div>
-      </div>
-    </div>
-  </dialog>
-
-  <!-- ═══ Board Activity Modal ═══ -->
-  <dialog class="task-dialog" id="activity-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>⚡ Full Board Activity</h3>
-        <button class="close-btn" id="close-activity-modal-btn" type="button">&times;</button>
-      </div>
-      <div class="activity-log-container hide-scrollbar" id="modal-activity-log">
-        <!-- Will be cloned here by JS -->
       </div>
     </div>
   </dialog>

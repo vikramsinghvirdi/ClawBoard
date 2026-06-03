@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fetchChannels()
   ]);
   await fetchTasks();
-  fetchActivity();
+  renderLocalActivity();
 
   // Event listeners
   addBtn.addEventListener('click', () => openModal(null));
@@ -160,7 +160,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   setInterval(() => {
     if (!draggedTaskId) {
       fetchTasks();
-      fetchActivity();
     }
   }, 5000);
 
@@ -202,23 +201,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
   document.getElementById('workspace-logs-layout').style.display = 'none';
-
-  // ─── Activity Modal Logic ───
-  const expandActivityBtn = document.getElementById('expand-activity-btn');
-  const activityModal = document.getElementById('activity-modal');
-  const closeActivityModalBtn = document.getElementById('close-activity-modal-btn');
-  const modalActivityLog = document.getElementById('modal-activity-log');
-  const localActivityLogEl = document.getElementById('local-activity-log');
-
-  expandActivityBtn.addEventListener('click', () => {
-    modalActivityLog.innerHTML = localActivityLogEl.innerHTML;
-    activityModal.showModal();
-  });
-
-  closeActivityModalBtn.addEventListener('click', () => {
-    activityModal.close();
-  });
-  closeDialogOnBackdropClick(activityModal);
 
   openAgentDirectoryBtn?.addEventListener('click', () => openAgentDirectory());
   closeAgentDirectoryBtn?.addEventListener('click', () => agentDirectoryDialog.close());
@@ -273,7 +255,7 @@ function renderLocalActivity() {
     return;
   }
 
-  container.innerHTML = localActivityLog.slice(0, 20).map(entry => `
+  container.innerHTML = localActivityLog.slice(0, MAX_LOCAL_ACTIVITY).map(entry => `
     <div class="activity-item local-activity-entry">
       <span class="activity-emoji">${entry.emoji}</span>
       <span class="activity-text">${escapeHtml(entry.message)}</span>
@@ -785,44 +767,6 @@ async function fetchTasks() {
   } catch (err) {
     console.error('Error fetching tasks:', err);
     showToast('Failed to load tasks from KANBAN.md', 'error');
-  }
-}
-
-// ─── Fetch File-Based Activity Log ───────────────────────────────────
-async function fetchActivity() {
-  try {
-    const res = await fetch('/api/activity');
-    if (!res.ok) throw new Error('Network error');
-    const data = await res.json();
-
-    const dateBadge = document.getElementById('activity-date');
-    const activityContainer = document.getElementById('file-activity-log');
-
-    if (data.error || !data.content) {
-      dateBadge.textContent = 'No logs';
-      activityContainer.innerHTML = '<p class="activity-placeholder">No workspace activity.</p>';
-      return;
-    }
-
-    dateBadge.textContent = data.date || 'Today';
-
-    const lines = data.content.split('\n');
-    const items = [];
-    for (let line of lines) {
-      const trimmed = line.trim();
-      if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
-        let content = trimmed.substring(1).trim();
-        content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        content = content.replace(/`(.*?)`/g, '<code>$1</code>');
-        items.push(`<div class="activity-item">${content}</div>`);
-      }
-    }
-
-    activityContainer.innerHTML = items.length > 0
-      ? items.join('')
-      : '<p class="activity-placeholder">No formatted entries.</p>';
-  } catch (err) {
-    console.error('Error fetching activity:', err);
   }
 }
 
