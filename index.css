@@ -452,6 +452,9 @@ body {
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
+  overflow: visible;
+  position: relative;
+  z-index: 80;
 }
 
 .tab-group,
@@ -469,6 +472,10 @@ body {
 .agent-filter {
   min-width: 220px;
   position: relative;
+}
+
+.agent-filter.menu-open {
+  z-index: 100;
 }
 
 .agent-filter-toggle,
@@ -510,7 +517,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -523,7 +530,7 @@ body {
   position: absolute;
   right: 0;
   top: 100%;
-  z-index: 20;
+  z-index: 1000;
 }
 
 .agent-filter-menu[hidden] {
@@ -652,7 +659,9 @@ body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  position: relative;
   transition: gap var(--duration-normal) var(--ease-out);
+  z-index: 1;
 }
 
 .workspace-layout.sidebar-collapsed {

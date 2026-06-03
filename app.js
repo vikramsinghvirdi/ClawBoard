@@ -554,6 +554,7 @@ function setAgentFilterMenuOpen(isOpen) {
   if (!agentFilterToggle || !agentFilterMenu) return;
   agentFilterToggle.setAttribute('aria-expanded', String(isOpen));
   agentFilterMenu.hidden = !isOpen;
+  agentFilter?.classList.toggle('menu-open', isOpen);
 }
 
 function agentMatchesTask(task, agentId) {
@@ -929,11 +930,30 @@ async function saveTasksToServer() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(tasksData)
     });
-    if (!res.ok) throw new Error('Save failed');
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Save failed');
+    }
+    return true;
   } catch (err) {
     console.error('Error saving tasks:', err);
-    showToast('Failed to save to KANBAN.md', 'error');
+    showToast(err.message || 'Failed to save to KANBAN.md', 'error');
+    return false;
   }
+}
+
+function findTaskLocation(taskId, preferredColumn = '') {
+  const columns = preferredColumn
+    ? [preferredColumn, ...COLUMNS.filter(col => col !== preferredColumn)]
+    : COLUMNS;
+
+  for (const col of columns) {
+    const list = tasksData[col] || [];
+    const task = list.find(item => item.id === taskId);
+    if (task) return { task, col };
+  }
+
+  return null;
 }
 
 // ─── Send Discord Notification ──────────────────────────────────────
@@ -1341,6 +1361,23 @@ function scheduleAutoPickupFromTodo(task) {
   }, 2000);
 }
 
+function queueAssignedTask(taskId) {
+  const found = findTaskLocation(taskId);
+  if (!found || !found.task.assigned) return false;
+
+  if (found.col === 'Backlog') {
+    moveTask(taskId, 'Backlog', 'Todo');
+    return true;
+  }
+
+  if (found.col === 'Todo') {
+    scheduleAutoPickupFromTodo(found.task);
+    return true;
+  }
+
+  return false;
+}
+
 async function scheduleAgentPickup(task) {
   if (!canAutoInvokeAgents()) return;
   if (!task.assigned) return;
@@ -1489,7 +1526,7 @@ function openModal(task = null, colName = '') {
   dialog.showModal();
 }
 
-function saveTask(e) {
+async function saveTask(e) {
   e.preventDefault();
 
   const id = inputId.value;
@@ -1508,17 +1545,40 @@ function saveTask(e) {
 
   if (!title) return;
 
+  const submitBtn = taskForm.querySelector('button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+  }
+
+  let saved = false;
+  let savedTaskId = id;
+  let shouldQueueAssignedTask = false;
+
   if (id) {
-    // Update existing
-    const taskList = tasksData[col];
-    const task = taskList.find(t => t.id === id);
-    if (task) {
-      task.title = title;
-      task.details = details;
-      task.assigned = assigned;
-      task.channel = channel;
-      task.priority = priority;
+    const found = findTaskLocation(id, col);
+    if (!found) {
+      showToast('Task was not found. Refreshing board...', 'error');
+      await fetchTasks();
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save Task';
+      }
+      return;
     }
+
+    const previousAssigned = found.task.assigned || '';
+    shouldQueueAssignedTask = Boolean(
+      assigned
+      && ['Backlog', 'Todo'].includes(found.col)
+      && (found.col === 'Backlog' || previousAssigned !== assigned)
+    );
+    found.task.title = title;
+    found.task.details = details;
+    found.task.assigned = assigned;
+    found.task.channel = channel;
+    found.task.priority = priority;
+    saved = await saveTasksToServer();
   } else {
     // Create new — always to Backlog
     const newTask = {
@@ -1527,15 +1587,33 @@ function saveTask(e) {
       completed: false,
       createdAt: new Date().toISOString()
     };
+    savedTaskId = newTask.id;
+    shouldQueueAssignedTask = Boolean(assigned);
     tasksData['Backlog'].push(newTask);
-    showToast(`📋 "${title}" added to Backlog`, 'success');
     addActivity('📋', `New task created: "${title}"`);
+    saved = await saveTasksToServer();
   }
 
-  renderBoard();
-  saveTasksToServer();
+  if (!saved) {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Task';
+    }
+    return;
+  }
+
+  await fetchTasks();
+  const queued = shouldQueueAssignedTask ? queueAssignedTask(savedTaskId) : false;
   renderAgentSidebar();
+  if (!queued) {
+    showToast(id ? 'Task saved' : `📋 "${title}" added to Backlog`, 'success');
+  }
   dialog.close();
+
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Save Task';
+  }
 }
 
 function deleteTask() {

@@ -92,7 +92,7 @@ ClawBoard works with defaults from your current user account, but you can overri
 | `KANBAN_PATH` | Path to the board markdown file |
 | `MEMORY_DIR` | Path to OpenClaw memory/activity logs |
 | `BOARD_CHANNEL_ID` | Discord channel for board status notifications |
-| `CLAWBOARD_AUTO_INVOKE_AGENTS` | Optional. Set to `true` to let ClawBoard run `openclaw agent` when tasks enter In Progress |
+| `CLAWBOARD_AUTO_INVOKE_AGENTS` | Optional. Set to `false` to stop ClawBoard from running `openclaw agent` when tasks are assigned or moved into active work |
 | `CLAWBOARD_CONFIG` | Optional JSON config file for the same settings |
 
 You can also place a JSON file at `~/.openclaw/clawboard.json` or `.clawboard.json` in the repo:
@@ -102,11 +102,13 @@ You can also place a JSON file at `~/.openclaw/clawboard.json` or `.clawboard.js
   "boardChannelId": "123456789012345678",
   "kanbanPath": "/Users/you/.openclaw/workspace/KANBAN.md",
   "memoryDir": "/Users/you/.openclaw/workspace/memory",
-  "autoInvokeAgents": false
+  "autoInvokeAgents": true
 }
 ```
 
-Agent auto-start is off by default. This prevents ClawBoard from triggering Codex/OpenClaw command approval prompts for users who only want a visual Kanban board.
+Agent auto-start is on by default because ClawBoard is meant to dispatch OpenClaw work, not only label tickets. To use it as a read-only visual Kanban board, set `CLAWBOARD_AUTO_INVOKE_AGENTS=false` or `"autoInvokeAgents": false`.
+
+If OpenClaw asks for command approvals while an agent is working, adjust your OpenClaw exec policy or allowlist with `openclaw exec-policy` / `openclaw approvals`. ClawBoard starts the agent; OpenClaw controls how much terminal/tool access that agent receives.
 
 ## 🏗️ Architecture
 
@@ -125,10 +127,10 @@ ClawBoard/
 
 1. **Server** reads tasks from `~/.openclaw/workspace/KANBAN.md` (markdown-based persistence)
 2. **Board UI** fetches agents and channels from OpenClaw config via API endpoints
-3. **Drag-and-drop** moves tasks between columns with validation
-4. **Discord notifications** are sent to `BOARD_CHANNEL_ID` when configured, or to the task's assigned channel as fallback
-5. **Agent replies** are delivered to the assigned agent's Discord channel when your OpenClaw agents are run separately
-6. **Optional auto-start** can run `openclaw agent` for In Progress tasks only when explicitly enabled
+3. **Assignment** queues Backlog tasks into To Do and wakes the selected OpenClaw agent
+4. **Drag-and-drop** moves tasks between columns with validation
+5. **Discord notifications** are sent to `BOARD_CHANNEL_ID` when configured, or to the task's assigned channel as fallback
+6. **Agent replies** are delivered to the assigned agent's Discord channel
 7. **Agent models** can be changed from the sidebar using models already listed in OpenClaw config
 8. **Review workflow** lets you approve or reject agent work directly from the board
 

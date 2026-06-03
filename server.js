@@ -25,7 +25,7 @@ function readBooleanFlag(value) {
 
 const AUTO_INVOKE_AGENTS = ENV_AUTO_INVOKE_AGENTS !== undefined
   ? readBooleanFlag(ENV_AUTO_INVOKE_AGENTS)
-  : clawboardConfig.autoInvokeAgents === true;
+  : clawboardConfig.autoInvokeAgents !== false;
 
 function readJsonFile(filePath) {
   try {
