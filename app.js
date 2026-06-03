@@ -64,7 +64,8 @@ const agentFilterToggle = document.getElementById('agent-filter-toggle');
 const agentFilterLabel = document.getElementById('agent-filter-label');
 const agentFilterMenu = document.getElementById('agent-filter-menu');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
-const logDateFilter = document.getElementById('log-date-filter');
+const logDateFrom = document.getElementById('log-date-from');
+const logDateTo = document.getElementById('log-date-to');
 const logSearchInput = document.getElementById('log-search-input');
 const clearLogSearchBtn = document.getElementById('clear-log-search-btn');
 const fileActivityLog = document.getElementById('file-activity-log');
@@ -159,11 +160,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (event.key === 'Escape') setAgentFilterMenuOpen(false);
   });
   logSearchInput?.addEventListener('input', renderWorkspaceLogs);
-  logDateFilter?.addEventListener('change', () => fetchActivity(logDateFilter.value));
+  logDateFrom?.addEventListener('change', () => fetchActivity());
+  logDateTo?.addEventListener('change', () => fetchActivity());
   clearLogSearchBtn?.addEventListener('click', () => {
-    logSearchInput.value = '';
-    renderWorkspaceLogs();
-    logSearchInput.focus();
+    if (logSearchInput) logSearchInput.value = '';
+    if (logDateFrom) logDateFrom.value = '';
+    if (logDateTo) logDateTo.value = '';
+    fetchActivity();
+    logSearchInput?.focus();
   });
 
   // Setup drag-and-drop on all columns
@@ -316,15 +320,25 @@ function parseWorkspaceLogEntries(content = '') {
   return entries;
 }
 
-function updateLogDateOptions(dates = [], selectedDate = '') {
-  if (!logDateFilter) return;
+function updateLogDateBounds(dates = []) {
+  const days = [...new Set(dates.map(date => date.slice(0, 10)).filter(Boolean))].sort();
+  if (logDateFrom) {
+    logDateFrom.min = days[0] || '';
+    logDateFrom.max = days[days.length - 1] || '';
+  }
+  if (logDateTo) {
+    logDateTo.min = days[0] || '';
+    logDateTo.max = days[days.length - 1] || '';
+  }
+}
 
-  const currentValue = logDateFilter.value;
-  logDateFilter.innerHTML = '<option value="">Latest</option>';
-  [...dates].reverse().forEach(date => {
-    logDateFilter.appendChild(new Option(date, date));
-  });
-  logDateFilter.value = selectedDate || (dates.includes(currentValue) ? currentValue : '');
+function getLogRangeLabel() {
+  const from = logDateFrom?.value || '';
+  const to = logDateTo?.value || '';
+  if (from && to) return `${from} to ${to}`;
+  if (from) return `from ${from}`;
+  if (to) return `through ${to}`;
+  return 'all dates';
 }
 
 function renderWorkspaceLogs() {
@@ -337,7 +351,7 @@ function renderWorkspaceLogs() {
   });
   const visibleEntries = entries.filter(entry => entry.type === 'entry').length;
   const totalEntries = workspaceLogState.entries.filter(entry => entry.type === 'entry').length;
-  const dateLabel = workspaceLogState.date || 'latest';
+  const dateLabel = getLogRangeLabel();
 
   if (workspaceLogState.entries.length === 0) {
     fileActivityLog.innerHTML = '<p class="activity-placeholder">No workspace logs found.</p>';
@@ -370,7 +384,13 @@ async function fetchActivity(date = '') {
   if (logResultSummary) logResultSummary.textContent = 'Loading workspace logs...';
 
   try {
-    const query = date ? `?date=${encodeURIComponent(date)}` : '';
+    const params = new URLSearchParams();
+    const dateFrom = logDateFrom?.value || '';
+    const dateTo = logDateTo?.value || '';
+    if (date) params.set('date', date);
+    if (dateFrom) params.set('dateFrom', dateFrom);
+    if (dateTo) params.set('dateTo', dateTo);
+    const query = params.toString() ? `?${params}` : '';
     const res = await fetch(`/api/activity${query}`);
     if (!res.ok) throw new Error('Network error');
     const data = await res.json();
@@ -381,7 +401,7 @@ async function fetchActivity(date = '') {
       entries: parseWorkspaceLogEntries(data.content || '')
     };
 
-    updateLogDateOptions(workspaceLogState.dates, date || '');
+    updateLogDateBounds(workspaceLogState.dates);
     renderWorkspaceLogs();
   } catch (err) {
     console.error('Error fetching activity:', err);

@@ -1042,18 +1042,35 @@ const server = http.createServer((req, res) => {
         return;
       }
       const dates = mdFiles.map(file => file.replace(/\.md$/, '')).sort();
+      const dateFrom = url.searchParams.get('dateFrom') || '';
+      const dateTo = url.searchParams.get('dateTo') || '';
       const requestedDate = url.searchParams.get('date') || '';
-      const selectedDate = dates.includes(requestedDate) ? requestedDate : dates[dates.length - 1];
-      const selectedFile = `${selectedDate}.md`;
-      fs.readFile(path.join(MEMORY_DIR, selectedFile), 'utf8', (err, data) => {
-        if (err) {
+      const inRange = (date) => {
+        const day = date.slice(0, 10);
+        if (requestedDate) return date === requestedDate;
+        if (dateFrom && day < dateFrom) return false;
+        if (dateTo && day > dateTo) return false;
+        return true;
+      };
+      const selectedDates = dates.filter(inRange);
+      const selectedFiles = selectedDates.map(date => `${date}.md`);
+      const logReads = selectedFiles.map(file => new Promise((resolve, reject) => {
+        fs.readFile(path.join(MEMORY_DIR, file), 'utf8', (readErr, data) => {
+          if (readErr) reject(readErr);
+          else resolve({ date: file.replace(/\.md$/, ''), content: data });
+        });
+      }));
+
+      Promise.all(logReads)
+        .then(logs => {
+          const content = logs.map(log => log.content).join('\n\n');
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ date: requestedDate || '', dateFrom, dateTo, dates, selectedDates, logs, content }));
+        })
+        .catch(() => {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Failed to read memory file' }));
-          return;
-        }
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ date: selectedDate, dates, content: data }));
-      });
+        });
     });
   }
   // ── Static Files ──
