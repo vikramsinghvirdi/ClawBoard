@@ -16,7 +16,16 @@ const OPENCLAW_CONFIG = process.env.OPENCLAW_CONFIG || clawboardConfig.openclawC
 const KANBAN_PATH = process.env.KANBAN_PATH || clawboardConfig.kanbanPath || path.join(HOME_DIR, '.openclaw', 'workspace', 'KANBAN.md');
 const MEMORY_DIR = process.env.MEMORY_DIR || clawboardConfig.memoryDir || path.join(path.dirname(KANBAN_PATH), 'memory');
 const ENV_BOARD_CHANNEL_ID = process.env.BOARD_CHANNEL_ID || '';
+const ENV_AUTO_INVOKE_AGENTS = process.env.CLAWBOARD_AUTO_INVOKE_AGENTS;
 let runtimeBoardChannelId = ENV_BOARD_CHANNEL_ID || clawboardConfig.boardChannelId || clawboardConfig.discord?.boardChannelId || '';
+
+function readBooleanFlag(value) {
+  return /^(1|true|yes|on)$/i.test(String(value || '').trim());
+}
+
+const AUTO_INVOKE_AGENTS = ENV_AUTO_INVOKE_AGENTS !== undefined
+  ? readBooleanFlag(ENV_AUTO_INVOKE_AGENTS)
+  : clawboardConfig.autoInvokeAgents === true;
 
 function readJsonFile(filePath) {
   try {
@@ -320,6 +329,8 @@ function getSetupStatus() {
     boardChannelId: runtimeBoardChannelId,
     savedBoardChannelId,
     envBoardChannelIdConfigured: Boolean(ENV_BOARD_CHANNEL_ID),
+    autoInvokeAgents: AUTO_INVOKE_AGENTS,
+    envAutoInvokeAgentsConfigured: ENV_AUTO_INVOKE_AGENTS !== undefined,
     availableModels: getAvailableModels(config)
   };
 }
@@ -646,8 +657,11 @@ function buildStatusEmbed(task, fromCol, toCol) {
 }
 
 function invokeAgentForTask({ taskId, agentId, title, details = '', channel = '' }) {
+  if (!AUTO_INVOKE_AGENTS) {
+    throw new Error('Agent auto-start is disabled. Set CLAWBOARD_AUTO_INVOKE_AGENTS=true or autoInvokeAgents: true in clawboard.json to enable it.');
+  }
   const port = process.env.PORT || PORT;
-  const replyChannelId = getAgentChannelId(agentId, channel || BOARD_CHANNEL_ID);
+  const replyChannelId = getAgentChannelId(agentId, channel || runtimeBoardChannelId);
   const replyTo = `channel:${replyChannelId}`;
   const sessionKey = `${agentId}:task-${taskId}`;
   const task = { id: taskId, title, details, assigned: agentId, channel: `#${replyChannelId}` };
@@ -1007,7 +1021,8 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ success: true, replyChannelId }));
       } catch (err) {
         console.error('Invoke agent error:', err.message);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
+        const statusCode = AUTO_INVOKE_AGENTS ? 500 : 403;
+        res.writeHead(statusCode, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: err.message }));
       }
     });

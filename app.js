@@ -650,6 +650,10 @@ function renderBoardChannelSetting() {
   boardChannelHelp.textContent = `Active board channel: ${activeChannel}.${envNote}`;
 }
 
+function canAutoInvokeAgents() {
+  return Boolean(setupStatus?.autoInvokeAgents);
+}
+
 async function saveBoardChannelSetting(boardChannelId) {
   const normalized = String(boardChannelId || '').trim();
   if (saveBoardChannelBtn) saveBoardChannelBtn.disabled = true;
@@ -1265,6 +1269,15 @@ function moveTask(taskId, sourceCol, targetCol, isAutoPickup = false, targetInde
 
   // ═══ AGENT AUTO-PICKUP ═══
   if (!isAutoPickup) {
+    if (!canAutoInvokeAgents()) {
+      if (targetCol === 'Todo') {
+        showToast('Task queued. Agent auto-start is off for safety.', 'info');
+      } else if (targetCol === 'In Progress') {
+        showToast('Task marked In Progress. Agent auto-start is off.', 'info');
+        addActivity('🛡️', `Auto-start skipped for "${task.title}"`);
+      }
+      return;
+    }
     if (targetCol === 'Todo') {
       scheduleAutoPickupFromTodo(task);
     } else if (targetCol === 'In Progress') {
@@ -1280,6 +1293,7 @@ function isAgentBusy(agentId) {
 }
 
 function scheduleAutoPickupFromTodo(task) {
+  if (!canAutoInvokeAgents()) return;
   if (!task.assigned) return;
 
   const agent = openclawAgents.find(a => a.id === task.assigned || a.name === task.assigned);
@@ -1308,6 +1322,7 @@ function scheduleAutoPickupFromTodo(task) {
 }
 
 async function scheduleAgentPickup(task) {
+  if (!canAutoInvokeAgents()) return;
   if (!task.assigned) return;
 
   const agent = openclawAgents.find(a => a.id === task.assigned || a.name === task.assigned);
