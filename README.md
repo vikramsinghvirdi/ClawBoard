@@ -27,7 +27,7 @@ If your OpenClaw agents can work in parallel, your bottleneck becomes planning a
 - **Claw Pickup Animation**: Visual feedback when an idle agent auto-picks a To Do task into In Progress
 - **Review Workflow**: Approve or reject tasks with feedback — agents get notified
 - **Validation**: Can't move to "To Do" without assigning an agent and channel
-- **Board Activity Log**: Shows recent task moves, assignments, review decisions, and agent pickup events in the Logs tab
+- **Workspace Logs**: Browse OpenClaw memory logs with search and date filtering in the Logs tab
 - **First-run Setup**: Guided setup checklist for config, agents, Discord bindings, and board status channel
 - **Responsive Dark Dashboard**: Dense board layout, clean controls, and horizontal lanes for small screens
 
@@ -156,6 +156,7 @@ ClawBoard is intentionally small: it is not a full issue tracker, and it does no
 | `/api/agent-model` | POST | Update one agent's primary model |
 | `/api/channels` | GET | Get Discord channel bindings |
 | `/api/notify` | POST | Send Discord notification |
+| `/api/activity` | GET | Get workspace logs, optionally filtered with `?date=YYYY-MM-DD` |
 | `/api/setup` | GET | Get onboarding/configuration status |
 | `/api/settings/board-channel` | POST | Save or clear the board-wide Discord status channel |
 | `/api/task-status` | POST | Move one task by id |

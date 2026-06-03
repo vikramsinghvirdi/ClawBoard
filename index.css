@@ -425,16 +425,18 @@ body {
   display: flex;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  padding: var(--space-xl);
+  padding: var(--space-lg);
 }
 .workspace-logs-layout .full-page-section {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ─── Filter Bar ───────────────────────────────────────────────────── */
@@ -1239,36 +1241,86 @@ body {
   text-overflow: ellipsis;
 }
 
-.workspace-activity-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-sm);
-  padding-bottom: var(--space-sm);
+.logs-header {
+  align-items: flex-end;
   border-bottom: 1px solid var(--border-subtle);
-}
-
-.workspace-activity-header h3 {
-  margin: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.workspace-activity-header {
-  padding-bottom: var(--space-md);
+  display: flex;
+  gap: var(--space-md);
+  justify-content: space-between;
   margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  flex-shrink: 0;
 }
 
-.workspace-activity-header h3 {
+.logs-header h3 {
+  color: var(--text-primary);
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--text-primary);
+  margin: 0;
 }
 
-.workspace-board-log {
-  font-size: 0.88rem;
+.logs-header p {
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.logs-controls {
+  align-items: flex-end;
+  display: flex;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.logs-control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.logs-control span {
+  color: var(--text-tertiary);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.logs-control input,
+.logs-control select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
+.logs-control input:focus,
+.logs-control select:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+  outline: none;
+}
+
+.logs-search-control {
+  min-width: 260px;
+}
+
+.workspace-file-log {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.86rem;
   gap: 0;
-  line-height: 1.5;
+  line-height: 1.55;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: var(--space-sm);
 }
 
 /* Activity Log */
@@ -1307,6 +1359,32 @@ body {
   padding: 1px 4px;
 }
 
+.activity-log-heading {
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin: var(--space-sm) 0 4px;
+  padding: 4px 6px;
+}
+
+.activity-log-heading:first-child {
+  margin-top: 0;
+}
+
+.workspace-log-entry {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+  padding: 9px 10px;
+}
+
+.workspace-log-entry:last-child {
+  margin-bottom: 0;
+}
+
 /* Local activity entries */
 .local-activity-entry {
   display: flex;
@@ -1314,18 +1392,6 @@ body {
   gap: var(--space-sm);
   font-size: 0.76rem;
   line-height: 1.4;
-}
-
-.workspace-board-log .local-activity-entry {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-sm);
-  padding: 10px 12px;
-}
-
-.workspace-board-log .activity-text {
-  color: var(--text-primary);
 }
 
 .activity-emoji {
@@ -2288,6 +2354,24 @@ dialog#agent-directory-dialog .modal-content {
   #open-agent-directory-btn {
     flex: 0 0 auto;
   }
+
+  .logs-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .logs-controls {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .logs-control {
+    flex: 1 1 180px;
+  }
+
+  .logs-search-control {
+    min-width: 220px;
+  }
 }
 
 @media (max-width: 600px) {
@@ -2345,6 +2429,19 @@ dialog#agent-directory-dialog .modal-content {
   #open-agent-directory-btn {
     grid-column: 1 / -1;
     width: 100%;
+  }
+
+  .workspace-logs-layout {
+    padding: var(--space-sm);
+  }
+
+  .logs-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .logs-search-control {
+    min-width: 0;
   }
 
   .modal-actions,

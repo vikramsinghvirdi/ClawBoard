@@ -64,11 +64,17 @@ const agentFilterToggle = document.getElementById('agent-filter-toggle');
 const agentFilterLabel = document.getElementById('agent-filter-label');
 const agentFilterMenu = document.getElementById('agent-filter-menu');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
+const logDateFilter = document.getElementById('log-date-filter');
+const logSearchInput = document.getElementById('log-search-input');
+const clearLogSearchBtn = document.getElementById('clear-log-search-btn');
+const fileActivityLog = document.getElementById('file-activity-log');
+const logResultSummary = document.getElementById('log-result-summary');
 
 let reviewingTask = null;
 let reviewingCol = null;
 let onboardingDismissed = false;
 let selectedAgentFilters = new Set();
+let workspaceLogState = { date: '', dates: [], entries: [] };
 
 function closeDialogOnBackdropClick(dialogEl) {
   if (!dialogEl) return;
@@ -96,7 +102,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fetchChannels()
   ]);
   await fetchTasks();
-  renderLocalActivity();
+  fetchActivity();
 
   // Event listeners
   addBtn.addEventListener('click', () => openModal(null));
@@ -151,6 +157,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') setAgentFilterMenuOpen(false);
+  });
+  logSearchInput?.addEventListener('input', renderWorkspaceLogs);
+  logDateFilter?.addEventListener('change', () => fetchActivity(logDateFilter.value));
+  clearLogSearchBtn?.addEventListener('click', () => {
+    logSearchInput.value = '';
+    renderWorkspaceLogs();
+    logSearchInput.focus();
   });
 
   // Setup drag-and-drop on all columns
@@ -262,6 +275,120 @@ function renderLocalActivity() {
       <span class="activity-time">${entry.timeLabel}</span>
     </div>
   `).join('');
+}
+
+function formatActivityLine(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  return html;
+}
+
+function parseWorkspaceLogEntries(content = '') {
+  const entries = [];
+  let section = '';
+
+  content.split('\n').forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    const heading = trimmed.match(/^#{1,6}\s+(.+)/);
+    if (heading) {
+      section = heading[1].trim();
+      entries.push({
+        type: 'heading',
+        section,
+        text: section,
+        html: formatActivityLine(section)
+      });
+      return;
+    }
+
+    const text = trimmed.replace(/^[-*]\s+/, '');
+    entries.push({
+      type: 'entry',
+      section,
+      text,
+      html: formatActivityLine(text)
+    });
+  });
+
+  return entries;
+}
+
+function updateLogDateOptions(dates = [], selectedDate = '') {
+  if (!logDateFilter) return;
+
+  const currentValue = logDateFilter.value;
+  logDateFilter.innerHTML = '<option value="">Latest</option>';
+  [...dates].reverse().forEach(date => {
+    logDateFilter.appendChild(new Option(date, date));
+  });
+  logDateFilter.value = selectedDate || (dates.includes(currentValue) ? currentValue : '');
+}
+
+function renderWorkspaceLogs() {
+  if (!fileActivityLog || !logResultSummary) return;
+
+  const query = (logSearchInput?.value || '').trim().toLowerCase();
+  const entries = workspaceLogState.entries.filter(entry => {
+    if (!query) return true;
+    return `${entry.section} ${entry.text}`.toLowerCase().includes(query);
+  });
+  const visibleEntries = entries.filter(entry => entry.type === 'entry').length;
+  const totalEntries = workspaceLogState.entries.filter(entry => entry.type === 'entry').length;
+  const dateLabel = workspaceLogState.date || 'latest';
+
+  if (workspaceLogState.entries.length === 0) {
+    fileActivityLog.innerHTML = '<p class="activity-placeholder">No workspace logs found.</p>';
+    logResultSummary.textContent = 'No logs found.';
+    return;
+  }
+
+  if (entries.length === 0) {
+    fileActivityLog.innerHTML = '<p class="activity-placeholder">No logs match your search.</p>';
+    logResultSummary.textContent = `0 of ${totalEntries} logs on ${dateLabel}.`;
+    return;
+  }
+
+  fileActivityLog.innerHTML = entries.map(entry => {
+    if (entry.type === 'heading') {
+      return `<div class="activity-log-heading">${entry.html}</div>`;
+    }
+    return `<div class="activity-item workspace-log-entry">${entry.html}</div>`;
+  }).join('');
+
+  logResultSummary.textContent = query
+    ? `${visibleEntries} of ${totalEntries} logs on ${dateLabel}.`
+    : `${totalEntries} logs on ${dateLabel}.`;
+}
+
+async function fetchActivity(date = '') {
+  if (!fileActivityLog) return;
+
+  fileActivityLog.innerHTML = '<p class="activity-placeholder">Loading logs...</p>';
+  if (logResultSummary) logResultSummary.textContent = 'Loading workspace logs...';
+
+  try {
+    const query = date ? `?date=${encodeURIComponent(date)}` : '';
+    const res = await fetch(`/api/activity${query}`);
+    if (!res.ok) throw new Error('Network error');
+    const data = await res.json();
+
+    workspaceLogState = {
+      date: data.date || '',
+      dates: data.dates || [],
+      entries: parseWorkspaceLogEntries(data.content || '')
+    };
+
+    updateLogDateOptions(workspaceLogState.dates, date || '');
+    renderWorkspaceLogs();
+  } catch (err) {
+    console.error('Error fetching activity:', err);
+    workspaceLogState = { date: '', dates: [], entries: [] };
+    fileActivityLog.innerHTML = '<p class="activity-placeholder">Failed to load workspace logs.</p>';
+    if (logResultSummary) logResultSummary.textContent = 'Failed to load logs.';
+  }
 }
 
 // ─── Setup Status ───────────────────────────────────────────────────

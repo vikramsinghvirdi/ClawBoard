@@ -1017,24 +1017,27 @@ const server = http.createServer((req, res) => {
     fs.readdir(MEMORY_DIR, (err, files) => {
       if (err || !files || files.length === 0) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ activity: 'No recent activity found.' }));
+        res.end(JSON.stringify({ dates: [], content: '', activity: 'No recent activity found.' }));
         return;
       }
       const mdFiles = files.filter(f => f.endsWith('.md')).sort();
       if (mdFiles.length === 0) {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ activity: 'No recent activity found.' }));
+        res.end(JSON.stringify({ dates: [], content: '', activity: 'No recent activity found.' }));
         return;
       }
-      const latestFile = mdFiles[mdFiles.length - 1];
-      fs.readFile(path.join(MEMORY_DIR, latestFile), 'utf8', (err, data) => {
+      const dates = mdFiles.map(file => file.replace(/\.md$/, '')).sort();
+      const requestedDate = url.searchParams.get('date') || '';
+      const selectedDate = dates.includes(requestedDate) ? requestedDate : dates[dates.length - 1];
+      const selectedFile = `${selectedDate}.md`;
+      fs.readFile(path.join(MEMORY_DIR, selectedFile), 'utf8', (err, data) => {
         if (err) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Failed to read memory file' }));
           return;
         }
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ date: latestFile.replace('.md', ''), content: data }));
+        res.end(JSON.stringify({ date: selectedDate, dates, content: data }));
       });
     });
   }

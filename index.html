@@ -148,11 +148,27 @@
     <!-- ═══ Logs Workspace ═══ -->
     <div class="workspace-logs-layout hide-layout" id="workspace-logs-layout">
       <section class="full-page-section">
-        <div class="activity-header workspace-activity-header">
-          <h3>⚡ Board Activity</h3>
+        <div class="logs-header">
+          <div>
+            <h3>Logs</h3>
+            <p id="log-result-summary">Loading workspace logs...</p>
+          </div>
+          <div class="logs-controls">
+            <label class="logs-control">
+              <span>Date</span>
+              <select id="log-date-filter">
+                <option value="">Latest</option>
+              </select>
+            </label>
+            <label class="logs-control logs-search-control">
+              <span>Search</span>
+              <input id="log-search-input" type="search" placeholder="Search logs..." autocomplete="off">
+            </label>
+            <button id="clear-log-search-btn" class="btn btn-secondary" type="button">Clear</button>
+          </div>
         </div>
-        <div class="activity-log-container workspace-board-log hide-scrollbar" id="local-activity-log">
-          <div class="activity-placeholder">No board activity yet</div>
+        <div class="activity-log-container workspace-file-log hide-scrollbar" id="file-activity-log">
+          <p class="activity-placeholder">Loading logs...</p>
         </div>
       </section>
     </div>
